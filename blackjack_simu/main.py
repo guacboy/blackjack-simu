@@ -108,7 +108,7 @@ class MainMenu():
             # displays the game title
             if label == "title":
                 self.title_display = self.label
-                self.title_display.config(text = "Blackjack v1.0",
+                self.title_display.config(text = "Blackjack v0.0.1",
                                           font = TITLE_FONT)
             # displays the trademark title
             elif label == "copyright":
