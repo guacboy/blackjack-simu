@@ -5,12 +5,11 @@ from os import listdir
 import os
 import sys
 
-from style import *
-from game_pkg.deal import Deal
-from game_pkg.calculation import Calculation
+from game_pkg.deck import Deck
+from game_pkg.chips import Chips
+from display_pkg.style import *
 from display_pkg.delete import Delete
 from display_pkg.display import Display
-from display_pkg.chips import Chips
 
 '''
 ~TODO~
@@ -70,7 +69,7 @@ class MainMenu():
     def __init__(self):
         # initializes the bet and balance variables
         self.bet_amount = 0
-        self.balance = 10000
+        self.balance = 1000
         self.chips = Chips(bet_amount = self.bet_amount,
                            balance = self.balance)
     
@@ -108,7 +107,7 @@ class MainMenu():
             # displays the game title
             if label == "title":
                 self.title_display = self.label
-                self.title_display.config(text = "Blackjack v0.0.1",
+                self.title_display.config(text = "Blackjack v0.0.2",
                                           font = TITLE_FONT)
             # displays the trademark title
             elif label == "copyright":
@@ -171,7 +170,7 @@ class MainMenu():
         Delete.delete_main_menu(self)
         
         # shuffles cards in the deck
-        Deal.shuffle_cards(total_cards)
+        Deck.shuffle_cards(total_cards)
         
         # displays game board with initial player's options
         Blackjack.display_init_game(self)
@@ -431,7 +430,7 @@ class Blackjack(MainMenu):
         Blackjack.reset_round(self)
         
         # deals cards to player and dealer
-        Deal.deal_cards(total_cards,
+        Deck.deal_cards(total_cards,
                         player_cards,
                         dealer_cards)
         
@@ -632,15 +631,16 @@ class Blackjack(MainMenu):
         
         # calls the conversion class to assign png files with metadata values
         # then, calculates the total to pass into the check method
-        Calculation.sum_of_curr_cards(self,
-                                      player_cards,
-                                      dealer_cards)
+        self.player_total =  Deck.convert_png_to_values(self,
+                                                        player_cards)
+        self.dealer_total =  Deck.convert_png_to_values(self,
+                                                        dealer_cards)
         
         print("Player's total:", self.player_total)
         print("Dealer's total:", self.dealer_total)
         
-        Calculation.display_card_totals(self,
-                                        displayed_total_label)
+        Deck.display_card_totals(self,
+                                 displayed_total_label)
         
         # passes in the total amounts and
         # checks for win conditions
@@ -648,7 +648,8 @@ class Blackjack(MainMenu):
                          player_cards,
                          self.player_total,
                          dealer_cards,
-                         self.dealer_total) 
+                         self.dealer_total)
+        return self.player_total, self.dealer_total
             
     '''
     displays the menu options and pauses the game,
@@ -889,10 +890,8 @@ class Choice:
             Choice.hit(self,
                        total_cards,
                        dealer_cards)
-            dealer_total = Calculation.sum_of_curr_cards(self,
-                                                         player_cards,
-                                                         dealer_cards)
-            dealer_total = dealer_total[-1]
+            dealer_total = Deck.convert_png_to_values(self,
+                                                      dealer_cards)
         
 if __name__ == "__main__":
     MainMenu().display_main_menu()
