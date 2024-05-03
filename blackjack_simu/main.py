@@ -9,36 +9,7 @@ from game_pkg.deck import Deck
 from game_pkg.chips import Chips
 from display_pkg.style import *
 from display_pkg.delete import Delete
-from display_pkg.display import Display
-
-'''
-~TODO~
-- practice mode including learning and count
-(already typed, just need to fix and link)
-- poker chip details
-(potential solution: use place() method)
-- check labels
-- add the split method
-(potential solution: nested lists and iterate from ascending order)
-- add the extra bet amount when doubling down
-- add the return to main menu function
-- add an initial card total for dealer (ex. 9?; ? being the mystery card),
-then a final card total after
-dealer makes their turn
-- add a game over screen
-- add a save game option
-- make the game look nicer
-- other stuff, too tired to remember
-
-~BUGS~
-- balance not being refunded when resetting the bet or reopening the bet menu
-(potential solution: make a temp variable for display purpose separate
-from the actual balance and bet variable)
-- bet amount <= balance not working the way i want it to work
-(potential solution: make a separate variable for adding up the total)
-- two aces add up to 22 and auto loses
-(potential solution: len(player_cards) == 2 and ...)
-'''
+from display_pkg.display import Display, displays
 
 # cards used during play
 total_cards = [
@@ -87,17 +58,11 @@ class MainMenu():
                                          bg = BACKGROUND_COLOR)
         self.main_menu_container.pack(anchor = CENTER)
         
-        # main menu labels when starting up the program
-        main_menu_labels = [
-            "title",
-            "copyright"
-        ]
-        
-        # iterates the labels to be displayed
-        for label in main_menu_labels:
+        # iterates through the dictionary to be displayed
+        for display in displays["main_menu"]:
             root = self.main_menu_container
             
-            if label == "copyright":
+            if display == "copyright_label":
                 root = self.root
             
             self.label = Label(root,
@@ -105,51 +70,44 @@ class MainMenu():
                                bg = BACKGROUND_COLOR)
             
             # displays the game title
-            if label == "title":
-                self.title_display = self.label
-                self.title_display.config(text = "Blackjack v0.0.2",
+            if display == "title_label":
+                self.title_label = self.label
+                self.title_label.config(text = "Blackjack v0.0.3",
                                           font = TITLE_FONT)
             # displays the trademark title
-            elif label == "copyright":
-                self.copyright_display = self.label
-                self.copyright_display.config(text = "© Dylan Nguyen 2024",
+            elif display == "copyright_label":
+                self.copyright_label = self.label
+                self.copyright_label.config(text = "© Dylan Nguyen 2024",
                                               font = COPYRIGHT_FONT)
                 
-        self.title_display.pack(anchor = CENTER,
+        self.title_label.pack(anchor = CENTER,
                                 pady = 100)
-        self.copyright_display.pack(side = BOTTOM)
+        self.copyright_label.pack(side = BOTTOM)
         
         # creates a container for the option buttons
         self.main_menu_options_container = Frame(self.main_menu_container,
                                                  bg = BACKGROUND_COLOR)
         self.main_menu_options_container.pack(anchor = CENTER)
         
-        # main menu buttons when starting up the program
-        main_menu_buttons = [
-            "new_game",
-            "practice",
-            "exit"
-        ]
-        
-        # iterates through the buttons to be displayed
-        for button in main_menu_buttons:
+        # iterates through the dictionary to be displayed
+        for display in displays["main_menu"]:
             self.button = Button(self.main_menu_options_container,
                                      font = MAIN_MENU_FONT,
                                      relief = FLAT)
             
             # displays the new game button
-            if button == "new_game":
+            if display == "new_game_button":
                 self.new_game_button = self.button
                 self.new_game_button.config(text = "New Game",
                                             # deletes main menu and starts up
                                             # a new game
                                             command = lambda: self.init_new_game())
             # displays the practice button
-            elif button == "practice":
+            elif display == "practice_button":
                 self.practice_button = self.button
                 self.practice_button.config(text = "Practice")
             # displays the exit button
-            elif button == "exit":
+            elif display == "exit_button":
                 self.exit_button = self.button
                 self.exit_button.config(text = "Exit",
                                         # closes the program
@@ -176,7 +134,7 @@ class MainMenu():
         Blackjack.display_init_game(self)
         
         # updates balance and bet labels
-        Chips.display_balance_and_bet_amount(self)
+        Chips.display_score(self)
         
         # displays the menu option button
         Blackjack.display_menu_option(self)
@@ -225,7 +183,7 @@ class Blackjack(MainMenu):
                                      displayed_blank_cards)
             
             # updates balance and bet labels
-            Chips.update_balance_and_bet_amount(self)
+            Chips.update_score(self)
         except AttributeError:
             pass
         
@@ -235,24 +193,18 @@ class Blackjack(MainMenu):
         self.init_options_container.pack(side = BOTTOM,
                                          pady = 25)
         
-        # initial game buttons presented before the start of the round
-        init_game_buttons = [
-            "bet",
-            "deal"
-        ]
-        
-        # iterates through the buttons to be displayed
-        for button in init_game_buttons:
+        # iterates through the dictionary to be displayed
+        for display in displays["init_game"]:
             self.button = Button(self.init_options_container,
                                  compound = CENTER,
                                  activebackground = BACKGROUND_COLOR,
                                  highlightthickness = 0,
                                  bd = 0)
             
-            if button == "bet":
+            if display == "bet_button":
                 image = "choices_png/bet_button.png"
                 variable = "resize_bet_button"
-            elif button == "deal":
+            elif display == "deal_button":
                 image = "choices_png/deal_button.png"
                 variable = "resize_deal_button"
             
@@ -263,13 +215,13 @@ class Blackjack(MainMenu):
                                  variable = variable)
             
             # displays the bet button
-            if button == "bet":
+            if display == "bet_button":
                 self.bet_button = self.button
                 self.bet_button.config(image = self.resize_bet_button,
                                        # displays the bet request prompt
                                        command = lambda: Blackjack.display_bet_request(self))
             # displays the deal button    
-            elif button == "deal":
+            elif display == "deal_button":
                 self.deal_button = self.button
                 self.deal_button.config(image = self.resize_deal_button,
                                        # starts the turn
@@ -304,32 +256,25 @@ class Blackjack(MainMenu):
                                          rely = 0.4)
         
         # displays the bet request prompt
-        self.bet_request_display = Label(self.bet_request_container,
-                                         text = "PLACE YOUR BETS",
-                                         font = BET_REQUEST_FONT,
-                                         bg = BACKGROUND_COLOR)
-        self.bet_request_display.pack(side = TOP,
-                                      padx = 25,
-                                      pady = 25)
+        self.bet_request_label = Label(self.bet_request_container,
+                                       text = "PLACE YOUR BETS",
+                                       font = BET_REQUEST_FONT,
+                                       bg = BACKGROUND_COLOR)
+        self.bet_request_label.pack(side = TOP,
+                                    padx = 25,
+                                    pady = 25)
         
-        # bet request buttons for when entering a bet amount
-        bet_request_buttons = [
-            "confirm",
-            "reset",
-            "redo"
-        ]
-        
-        # iterates through the buttons to be displayed
-        for button in bet_request_buttons:
+        # iterates through the dictionary to be displayed
+        for display in displays["bet_request"]:
             root = self.bet_request_container
             
-            if button == "reset":
+            if display == "reset_button":
                 image = "betreq_png/reset_button.png"
                 variable = "resize_reset_button"
-            elif button == "redo":
+            elif display == "redo_button":
                 image = "betreq_png/redo_button.png"
                 variable = "resize_redo_button"
-            elif button == "confirm":
+            elif display == "confirm_button":
                 root = self.root
                 image = "betreq_png/confirm_button.png"
                 variable = "resize_confirm_button"
@@ -347,16 +292,16 @@ class Blackjack(MainMenu):
                                  variable = variable)
         
             # displays the reset button
-            if button == "reset":
+            if display == "reset_button":
                 self.reset_button = self.button
                 self.reset_button.config(image = self.resize_reset_button,
                                          command = lambda: Chips.reset_bet(self))
             # displays the redo button
-            elif button == "redo":
+            elif display == "redo_button":
                 self.redo_button = self.button
                 self.redo_button.config(image = self.resize_redo_button)
             # displays the confirm button
-            elif button == "confirm":
+            elif display == "confirm_button":
                 self.confirm_button = self.button
                 self.confirm_button.config(image = self.resize_confirm_button,
                                            # confirms bet and
@@ -380,22 +325,34 @@ class Blackjack(MainMenu):
             Display.resize_image(self,
                                  image = f"chips_png/{chip}",
                                  resize = CHIP_SIZE_BUTTON,
-                                 variable = "resize_chip_display")
+                                 variable = "resize_chip_label")
             
             # displays the poker chips buttons
             self.bet_request_button = Button(self.bet_request_container,
-                                            image = self.resize_chip_display,
+                                            image = self.resize_chip_label,
                                             compound = CENTER,
                                             activebackground = BACKGROUND_COLOR,
                                             highlightthickness = 0,
                                             bd = 0)
             self.bet_request_button.pack(side = LEFT)
             # keeps a reference to prevent it from being destroyed
-            self.bet_request_button.image = self.resize_chip_display
+            self.bet_request_button.image = self.resize_chip_label
             
             if chip == "black_chip.png":
                 self.bet_request_button.config(command = lambda: Chips.display_poker_chip(self,
                 color = "black_chip.png"))
+            elif chip == "blue_chip.png":
+                self.bet_request_button.config(command = lambda: Chips.display_poker_chip(self,
+                color = "blue_chip.png"))
+            elif chip == "green(red)_chip.png":
+                self.bet_request_button.config(command = lambda: Chips.display_poker_chip(self,
+                color = "green(red)_chip.png"))
+            elif chip == "red(green)_chip.png":
+                self.bet_request_button.config(command = lambda: Chips.display_poker_chip(self,
+                color = "red(green)_chip.png"))
+            elif chip == "white_chip.png":
+                self.bet_request_button.config(command = lambda: Chips.display_poker_chip(self,
+                color = "white_chip.png"))
         
         self.redo_button.pack(side = LEFT,
                               padx = (15, 0))
@@ -440,31 +397,24 @@ class Blackjack(MainMenu):
         self.card_options_container.pack(side = BOTTOM,
                                          pady = 25)
         
-        # game buttons for selecting an option
-        game_buttons = [
-            "double",
-            "hit",
-            "stand",
-            "split"
-        ]
-        
-        for button in game_buttons:
+        # iterates through the dictionary to be displayed
+        for display in displays["game"]:
             self.button = Button(self.card_options_container,
                                  compound = CENTER,
                                  activebackground = BACKGROUND_COLOR,
                                  highlightthickness = 0,
                                  bd = 0)
             
-            if button == "double":
+            if display == "double_button":
                 image = "choices_png/double_button.png"
                 variable = "resize_double_button"
-            elif button == "hit":
+            elif display == "hit_button":
                 image = "choices_png/hit_button.png"
                 variable = "resize_hit_button"
-            elif button == "stand":
+            elif display == "stand_button":
                 image = "choices_png/stand_button.png"
                 variable = "resize_stand_button"
-            elif button == "split":
+            elif display == "split_button":
                 image = "choices_png/split_button.png"
                 variable = "resize_split_button"
                 
@@ -475,14 +425,14 @@ class Blackjack(MainMenu):
                                  variable = variable)
             
             # displays the double button
-            if button == "double":
+            if display == "double_button":
                 self.double_button = self.button
                 self.double_button.config(image = self.resize_double_button,
                                           # adds another bet and card,
                                           # then ends turn
                                           command = lambda: Choice.double(self))
             # displays the hit button
-            elif button == "hit":
+            elif display == "hit_button":
                 self.hit_button = self.button
                 self.hit_button.config(image = self.resize_hit_button,
                                        # adds another card
@@ -490,13 +440,13 @@ class Blackjack(MainMenu):
                                                                     total_cards,
                                                                     player_cards))
             # displays the stand button
-            elif button == "stand":
+            elif display == "stand_button":
                 self.stand_button = self.button
                 self.stand_button.config(image = self.resize_stand_button,
                                          # ends turn
                                          command = lambda: Choice.stand(self))
             # displays the split button
-            elif button == "split":
+            elif display == "split_button":
                 self.split_button = self.button
                 self.split_button.config(image = self.resize_split_button,
                                          # adds another bet
@@ -557,25 +507,25 @@ class Blackjack(MainMenu):
                 Display.resize_image(self,
                                      image = f"cards_png/{card}",
                                      resize = CARD_SIZE,
-                                     variable = "resize_card_display")
+                                     variable = "resize_card_label")
                 
                 self.label = Label(self.root)
                 
                 # limits to only viewing the player's cards,
                 # displaying the player's current cards in play
                 if index < len(player_cards):
-                    self.player_cards_display = self.label
-                    self.player_cards_display.config(image = self.resize_card_display)
+                    self.player_cards_label = self.label
+                    self.player_cards_label.config(image = self.resize_card_label)
                     
-                    self.player_cards_display.place(x = player_card_placement_x,
-                                                    y = 700)
+                    self.player_cards_label.place(x = player_card_placement_x,
+                                                  y = 700)
                     
                     # keeps a reference to prevent it from being destroyed
-                    self.player_cards_display.image = self.resize_card_display
+                    self.player_cards_label.image = self.resize_card_label
                     
                     # appends to the displayed cards list
                     # to be later deleted when round resets
-                    displayed_cards.append(self.player_cards_display)
+                    displayed_cards.append(self.player_cards_label)
                     
                     # moves next card to the right of previous card 
                     player_card_placement_x += 25
@@ -583,18 +533,18 @@ class Blackjack(MainMenu):
                 # limits to only viewing the dealer's cards,
                 # displaying dealer's current cards in play
                 else: 
-                    self.dealer_cards_display = self.label
-                    self.dealer_cards_display.config(image = self.resize_card_display)
+                    self.dealer_cards_label = self.label
+                    self.dealer_cards_label.config(image = self.resize_card_label)
                     
-                    self.dealer_cards_display.place(x = dealer_card_placement_x,
-                                                    y = 50)
+                    self.dealer_cards_label.place(x = dealer_card_placement_x,
+                                                  y = 50)
                     
                     # keeps a reference to prevent it from being destroyed
-                    self.dealer_cards_display.image = self.resize_card_display 
+                    self.dealer_cards_label.image = self.resize_card_label 
                     
                     # appends to the displayed cards list
                     # to be later deleted when round resets
-                    displayed_cards.append(self.dealer_cards_display)
+                    displayed_cards.append(self.dealer_cards_label)
                     
                     # covers the second card of the dealer's hand by
                     # displaying a blank card over it
@@ -608,18 +558,18 @@ class Blackjack(MainMenu):
         Display.resize_image(self,
                              image = "blank_card.png",
                              resize = CARD_SIZE,
-                             variable = "resize_blank_card_display")
+                             variable = "resize_blank_card_label")
         
         # displays a blank card over the second
         # dealer's card
-        self.blank_cards_display = Label(self.root,
-                                         image = self.resize_blank_card_display)
-        self.blank_cards_display.place(x = 900,
-                                       y = 50)
+        self.blank_cards_label = Label(self.root,
+                                       image = self.resize_blank_card_label)
+        self.blank_cards_label.place(x = 900,
+                                     y = 50)
         
         # appends to the displayed blank cards list
         # to be later deleted when round resets
-        displayed_blank_cards.append(self.blank_cards_display)
+        displayed_blank_cards.append(self.blank_cards_label)
     
     '''
     updates current cards in play and
@@ -663,40 +613,33 @@ class Blackjack(MainMenu):
                                      pady = 80)
         
         # displays the pause text
-        self.pause_display = Label(self.pause_menu_options,
-                                   text = "== PAUSE ==",
-                                   font = PAUSE_TITLE_FONT)
-        self.pause_display.pack(side = TOP,
-                                pady = 25,
-                                padx = 30)
+        self.pause_label = Label(self.pause_menu_options,
+                                 text = "== PAUSE ==",
+                                 font = PAUSE_TITLE_FONT)
+        self.pause_label.pack(side = TOP,
+                              pady = 25,
+                              padx = 30)
         
-        # pause menu buttons for program options
-        pause_menu_buttons = [
-            "main_menu",
-            "quit",
-            "resume"
-        ]
-        
-        # iterates through the buttons to be displayed
-        for button in pause_menu_buttons:
+        # iterates through the dictionary to be displayed
+        for display in displays["pause_menu"]:
             self.button = Button(self.pause_menu_options,
                                  font = PAUSE_OPTION_FONT,
                                  relief = FLAT)
             
             # displays the main menu button
-            if button == "main_menu":
+            if display == "main_menu_button":
                 self.main_menu_button = self.button
                 self.main_menu_button.config(text = "Main Menu",
                                              # returns to the main menu
                                              command = lambda: print("Main Menu"))
             # displays the main menu button
-            elif button == "quit":
+            elif display == "quit_button":
                 self.quit_button = self.button
                 self.quit_button.config(text = "Quit",
                                              # closes the program
                                              command = lambda: sys.exit(CLOSE_PROGRAM))
             # displays the main menu button
-            elif button == "resume":
+            elif display == "resume_button":
                 self.resume_button = self.button
                 self.resume_button.config(text = "Resume",
                                              # closes pause menu and resumes game
@@ -768,10 +711,10 @@ class Check(Blackjack):
                 self.balance += self.bet_amount
                 
                 # displays the winning poker chips
-                self.add_poker_chip_display = Label(self.poker_chip_container,
-                                                    image = self.resize_chip_display,
-                                                    bg = BACKGROUND_COLOR)
-                self.add_poker_chip_display.pack(side = LEFT)
+                self.add_poker_chip_label = Label(self.poker_chip_container,
+                                                  image = self.resize_chip_label,
+                                                  bg = BACKGROUND_COLOR)
+                self.add_poker_chip_label.pack(side = LEFT)
             elif win == False:
                 # resets the bet amount
                 self.bet_amount = 0
@@ -821,10 +764,10 @@ class Check(Blackjack):
                 self.balance += self.bet_amount
                 
                 # displays the winning poker chips
-                self.add_poker_chip_display = Label(self.poker_chip_container,
-                                                    image = self.resize_chip_display,
-                                                    bg = BACKGROUND_COLOR)
-                self.add_poker_chip_display.pack(side = LEFT)
+                self.add_poker_chip_label = Label(self.poker_chip_container,
+                                                  image = self.resize_chip_label,
+                                                  bg = BACKGROUND_COLOR)
+                self.add_poker_chip_label.pack(side = LEFT)
             elif win == False:
                 # resets the bet amount
                 self.bet_amount = 0

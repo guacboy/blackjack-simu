@@ -3,6 +3,7 @@ from tkinter import *
 from PIL import Image, PngImagePlugin
 
 from display_pkg.style import *
+from display_pkg.display import displays
 
 class Deck:
     '''
@@ -79,30 +80,26 @@ class Deck:
     displays the card's total above the current cards in play
     '''
     def display_card_totals(self,
-                            displayed_total_label):
-        # displays the total values of player and dealer
-        card_total_labels = [
-            "player",
-            "dealer"
-        ]
-        
-        # iterates through the labels to display
-        for label in card_total_labels:
+                            displayed_total_label): 
+        # iterates through the dictionary to be displayed
+        for display in displays["card_total"]:
             self.label = Label(self.root,
                                font = CARD_TOTAL_FONT,
                                bg = BACKGROUND_COLOR)
             
             # displays player's card total
-            if label == "player":
-                self.player_total_display = self.label
-                self.player_total_display.config(text = f"({self.player_total})")
+            if display == "player_label":
+                self.player_total_label = self.label
+                self.player_total_label.config(text = f"({self.player_total})")
                 # appends to the displayed total label list
                 # to be later deleted when round resets
-                displayed_total_label.append(self.player_total_display)
+                displayed_total_label.append(self.player_total_label)
+            elif display == "dealer_label":
+                pass
         
-        self.player_total_display.place(anchor = CENTER,
-                                        relx = 0.5,
-                                        rely = 0.62)
+        self.player_total_label.place(anchor = CENTER,
+                                      relx = 0.5,
+                                      rely = 0.62)
     
     '''
     shuffles the cards in the deck

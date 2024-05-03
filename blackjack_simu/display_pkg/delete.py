@@ -4,7 +4,7 @@ class Delete:
     '''    
     def delete_main_menu(self):
         self.main_menu_container.pack_forget()
-        self.copyright_display.pack_forget()
+        self.copyright_label.pack_forget()
     
     '''
     deletes initial player options display
@@ -25,7 +25,7 @@ class Delete:
     def delete_all_poker_chips(self):
         self.poker_chip_container.place_forget()
     def delete_add_poker_chips(self):
-        self.add_poker_chip_display.pack_forget()
+        self.add_poker_chip_label.pack_forget()
         
     '''
     deletes game display
@@ -56,14 +56,13 @@ class Delete:
                            displayed_total_label):
         for label in displayed_total_label:
             label.place_forget()
-            # self.dealer_total_display.place_forget()
             
     '''
     deletes the balance and bet labels
     '''
-    def delete_balance_and_bet_amount(self):
-        self.balance_display.place_forget()
-        self.bet_amount_display.place_forget()
+    def delete_score(self):
+        self.balance_label.place_forget()
+        self.bet_amount_label.place_forget()
             
     '''
     deletes pause menu options
@@ -75,4 +74,4 @@ class Delete:
     deletes outcome display
     '''    
     def delete_check(self):
-        self.check_display.pack_forget()
+        self.check_label.pack_forget()

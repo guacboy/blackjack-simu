@@ -3,6 +3,7 @@ from PIL import Image, ImageTk
 
 from display_pkg.style import *
 from display_pkg.delete import Delete
+from display_pkg.display import displays
 
 class Chips:
     def __init__(self,
@@ -20,7 +21,7 @@ class Chips:
         # opens and resizes the image
         self.resize_card = Image.open(f"assets/chips_png/{color}") \
                                 .resize(CHIP_SIZE)
-        self.resize_chip_display = ImageTk.PhotoImage(self.resize_card)
+        self.resize_chip_label = ImageTk.PhotoImage(self.resize_card)
         
         # creates a container for the poker chips
         self.poker_chip_container = Frame(self.root)
@@ -29,20 +30,21 @@ class Chips:
                                         rely = 0.75)
         
         # displays the poker chips
-        self.poker_chip_display = Label(self.poker_chip_container,
-                                        image = self.resize_chip_display,
-                                        bg = BACKGROUND_COLOR)
-        self.poker_chip_display.pack(side = LEFT)
+        self.poker_chip_label = Label(self.poker_chip_container,
+                                      image = self.resize_chip_label,
+                                      bg = BACKGROUND_COLOR)
+        self.poker_chip_label.pack(side = LEFT)
         
         # adds the corresponding bet depending on the chip clicked
-        self.bet_amount = Bet.add_bet(color,
+        self.bet_amount = Bet.add_bet(self,
+                                      color,
                                       self.bet_amount,
                                       self.balance)
         self.balance = self.bet_amount[-1]
         self.bet_amount = self.bet_amount[0]
         
         # updates balance and bet labels
-        Chips.update_balance_and_bet_amount(self)
+        Chips.update_score(self)
         
         return self.bet_amount, self.balance
     
@@ -94,67 +96,62 @@ class Chips:
     '''
     displays the balance and bet amount
     '''
-    def display_balance_and_bet_amount(self):
-        # balance and bet amount labels
-        balance_and_bet_amount_labels = [
-            "balance",
-            "bet_amount"
-        ]
-        
+    def display_score(self):
         # iterates through the labels to be displayed
-        for label in balance_and_bet_amount_labels:
+        for display in displays["score"]:
             self.label = Label(self.root,
                                font = BALANCE_AND_BET_FONT,
                                bg = BACKGROUND_COLOR)
             
             # displays the current balance
-            if label == "balance":
-                self.balance_display = self.label
-                self.balance_display.config(text = f"Balance\n${self.balance}")
+            if display == "balance_label":
+                self.balance_label = self.label
+                self.balance_label.config(text = f"Balance\n${self.balance}")
             # displays the current bet amount
-            elif label == "bet_amount":
-                self.bet_amount_display = self.label
-                self.bet_amount_display.config(text = f"Bet\n${self.bet_amount}")
+            elif display == "bet_amount_label":
+                self.bet_amount_label = self.label
+                self.bet_amount_label.config(text = f"Bet\n${self.bet_amount}")
                 
-        self.balance_display.place(anchor = CENTER,
-                                   relx = 0.07,
-                                   rely = 0.93)
-        self.bet_amount_display.place(anchor = CENTER,
-                                      relx = 0.19,
-                                      rely = 0.93)
+        self.balance_label.place(anchor = CENTER,
+                                 relx = 0.07,
+                                 rely = 0.93)
+        self.bet_amount_label.place(anchor = CENTER,
+                                    relx = 0.19,
+                                    rely = 0.93)
     
     '''
     updates balance and bet labels
     '''
-    def update_balance_and_bet_amount(self):
+    def update_score(self):
         #deletes the balance and bet labels
-        Delete.delete_balance_and_bet_amount(self)
+        Delete.delete_score(self)
         
         # displays the balance and bet amount
-        Chips.display_balance_and_bet_amount(self)
+        Chips.display_score(self)
         
 class Bet:
     @staticmethod
-    def add_bet(color,
+    def add_bet(self,
+                color,
                 bet_amount,
                 balance):
-        if (bet_amount <= balance):
-            # adds corresponding bet amount depending on the chip clicked
-            if color == "black_chip.png":
-                bet_amount += 500
-                balance -= 500
-            elif color == "blue_chip.png":
-                bet_amount += 250
-                balance -= 250
-            elif color == "green(red)_chip.png":
-                bet_amount += 100
-                balance -= 100
-            elif color == "red(green)_chip.png":
-                bet_amount += 50
-                balance -= 50
-            elif color == "white_chip.png":
-                bet_amount += 25
-                balance -= 25
+        # adds corresponding bet amount depending on the chip clicked
+        if color == "black_chip.png":
+            bet_amount_display = 500
+        elif color == "blue_chip.png":
+            bet_amount_display = 250
+        elif color == "green(red)_chip.png":
+            bet_amount_display = 100
+        elif color == "red(green)_chip.png":
+            bet_amount_display = 50
+        elif color == "white_chip.png":
+            bet_amount_display = 25
+        
+        # checks if bet amount is less than or equal
+        # to current balance
+        if (bet_amount_display <= balance):
+            bet_amount += bet_amount_display
+            balance -= bet_amount_display
         else:
             print("Insufficient funds.")
         return bet_amount, balance
