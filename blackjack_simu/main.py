@@ -72,7 +72,7 @@ class MainMenu():
             # displays the game title
             if display == "title_label":
                 self.title_label = self.label
-                self.title_label.config(text = "Blackjack v0.0.3",
+                self.title_label.config(text = "Blackjack v0.0.4",
                                           font = TITLE_FONT)
             # displays the trademark title
             elif display == "copyright_label":
@@ -246,7 +246,10 @@ class Blackjack(MainMenu):
         Blackjack.reset_round(self)
         
         # resets the bet amount
-        self.bet_amount = 0
+        Chips.reset_bet(self)
+        
+        #updates the inital player's options
+        Chips.update_init_game(self)
         
         # creates a container for the bet requests
         self.bet_request_container = Frame(self.root,
@@ -358,7 +361,6 @@ class Blackjack(MainMenu):
                               padx = (15, 0))
         self.confirm_button.place(relx = 0.446,
                                   rely = 0.57)
-
     
     '''
     displays the menu option button
@@ -806,8 +808,8 @@ class Choice:
             # checks for win conditions between player and dealer
             # after player ends turn
             Check.manual_check(self,
-                            self.player_total,
-                            self.dealer_total)
+                               self.player_total,
+                               self.dealer_total)
     
     '''
     adds another card and another bet

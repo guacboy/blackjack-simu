@@ -5,6 +5,10 @@ from display_pkg.style import *
 from display_pkg.delete import Delete
 from display_pkg.display import displays
 
+# used to reset the balance and bet amount displays
+# if user decides to reset the bet amount
+bet_amount_total = []
+
 class Chips:
     def __init__(self,
                  bet_amount = 0,
@@ -18,28 +22,27 @@ class Chips:
     '''
     def display_poker_chip(self,
                            color):
-        # opens and resizes the image
-        self.resize_card = Image.open(f"assets/chips_png/{color}") \
-                                .resize(CHIP_SIZE)
-        self.resize_chip_label = ImageTk.PhotoImage(self.resize_card)
-        
         # creates a container for the poker chips
         self.poker_chip_container = Frame(self.root)
         self.poker_chip_container.place(anchor = CENTER,
                                         relx = 0.5,
                                         rely = 0.75)
         
-        # displays the poker chips
+        # opens and resizes the image
+        self.resize_card = Image.open(f"assets/chips_png/{color}") \
+                                .resize(CHIP_SIZE)
+        self.resize_chip_label = ImageTk.PhotoImage(self.resize_card)
+        
+        # displays the poker chip
         self.poker_chip_label = Label(self.poker_chip_container,
                                       image = self.resize_chip_label,
                                       bg = BACKGROUND_COLOR)
         self.poker_chip_label.pack(side = LEFT)
         
         # adds the corresponding bet depending on the chip clicked
-        self.bet_amount = Bet.add_bet(self,
-                                      color,
-                                      self.bet_amount,
-                                      self.balance)
+        self.bet_amount = Chips.add_bet(color,
+                                        self.bet_amount,
+                                        self.balance)
         self.balance = self.bet_amount[-1]
         self.bet_amount = self.bet_amount[0]
         
@@ -48,15 +51,53 @@ class Chips:
         
         return self.bet_amount, self.balance
     
+    def add_bet(color,
+                bet_amount,
+                balance):
+        # adds corresponding bet amount depending on the chip clicked
+        if color == "black_chip.png":
+            temp_bet_amount = 500
+        elif color == "blue_chip.png":
+            temp_bet_amount = 250
+        elif color == "green(red)_chip.png":
+            temp_bet_amount = 100
+        elif color == "red(green)_chip.png":
+            temp_bet_amount = 50
+        elif color == "white_chip.png":
+            temp_bet_amount = 25
+        
+        # checks if bet amount is less than or equal
+        # to current balance
+        if (temp_bet_amount <= balance):
+            # appends to a list to be later sum up
+            # for redo
+            bet_amount_total.append(temp_bet_amount)
+            
+            bet_amount += temp_bet_amount
+            balance -= temp_bet_amount
+        else:
+            print("Insufficient funds.")
+        return bet_amount, balance
+    
     '''
     resets the bet amount
     '''
     def reset_bet(self):
+        # redo's the balance and bet amount
+        self.balance += sum(bet_amount_total)
+        self.bet_amount -= sum(bet_amount_total)
+        print("reset bet prompted")
+        
+        bet_amount_total.clear()
+        
         try:
             # deletes poker chips display
             Delete.delete_all_poker_chips(self)
         except AttributeError:
             pass
+        
+        # updates balance and bet labels
+        Chips.update_score(self)
     
     '''
     repeats the previous bet amount
@@ -72,26 +113,31 @@ class Chips:
         Delete.delete_bet_request(self)
         
         try:
-            # moves betting chips to the center of the table
-            self.poker_chip_container.place(anchor = CENTER,
-                                            relx = 0.5,
-                                            rely = 0.45)
+            if self.bet_amount > 0:
+                # moves betting chips to the center of the table
+                self.poker_chip_container.place(anchor = CENTER,
+                                                relx = 0.5,
+                                                rely = 0.45)
+                pass
         except AttributeError:
             pass
         
+        # updates balance and bet labels
+        Chips.update_score(self)
+        
         #updates the inital player's options
-        Chips.update_init_game(self,
-                               self.bet_amount)
+        Chips.update_init_game(self)
     
     '''
     updates the inital player's options
     '''
-    def update_init_game(self,
-                         bet_amount):
+    def update_init_game(self):
         # checks if bet amount is a non-zero after update
-        if bet_amount > 0:
+        if self.bet_amount > 0:
             self.deal_button.pack(side = LEFT,
                                   padx = 10)
+        else:
+            self.deal_button.pack_forget()
             
     '''
     displays the balance and bet amount
@@ -128,30 +174,3 @@ class Chips:
         
         # displays the balance and bet amount
         Chips.display_score(self)
-        
-class Bet:
-    @staticmethod
-    def add_bet(self,
-                color,
-                bet_amount,
-                balance):
-        # adds corresponding bet amount depending on the chip clicked
-        if color == "black_chip.png":
-            bet_amount_display = 500
-        elif color == "blue_chip.png":
-            bet_amount_display = 250
-        elif color == "green(red)_chip.png":
-            bet_amount_display = 100
-        elif color == "red(green)_chip.png":
-            bet_amount_display = 50
-        elif color == "white_chip.png":
-            bet_amount_display = 25
-        
-        # checks if bet amount is less than or equal
-        # to current balance
-        if (bet_amount_display <= balance):
-            bet_amount += bet_amount_display
-            balance -= bet_amount_display
-        else:
-            print("Insufficient funds.")
-        return bet_amount, balance
