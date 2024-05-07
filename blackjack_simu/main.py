@@ -72,7 +72,7 @@ class MainMenu():
             # displays the game title
             if display == "title_label":
                 self.title_label = self.label
-                self.title_label.config(text = "Blackjack v0.0.4",
+                self.title_label.config(text = "Blackjack v0.0.5",
                                           font = TITLE_FONT)
             # displays the trademark title
             elif display == "copyright_label":
@@ -298,11 +298,14 @@ class Blackjack(MainMenu):
             if display == "reset_button":
                 self.reset_button = self.button
                 self.reset_button.config(image = self.resize_reset_button,
+                                         # resets the bet amount
                                          command = lambda: Chips.reset_bet(self))
             # displays the redo button
             elif display == "redo_button":
                 self.redo_button = self.button
-                self.redo_button.config(image = self.resize_redo_button)
+                self.redo_button.config(image = self.resize_redo_button,
+                                        # repeats the previous bet amount
+                                        command = lambda: Chips.redo_bet(self))
             # displays the confirm button
             elif display == "confirm_button":
                 self.confirm_button = self.button
@@ -463,10 +466,10 @@ class Blackjack(MainMenu):
             self.player_total <= 11 and
             player_cards[0].startswith("ace") != False or
             player_cards[1].startswith("ace") != False) or
-            self.player_total >= 16 and
+            (self.player_total >= 16 and
             self.player_total <= 18 and
             player_cards[0].startswith("ace") or
-            player_cards[1].startswith("ace")):
+            player_cards[1].startswith("ace"))):
                 self.double_button.pack(side = LEFT,
                                         padx = 10)  
                                
@@ -719,7 +722,7 @@ class Check(Blackjack):
                 self.add_poker_chip_label.pack(side = LEFT)
             elif win == False:
                 # resets the bet amount
-                self.bet_amount = 0
+                Chips.reset_bet(self)
                 
                 # deletes the poker chips
                 Delete.delete_all_poker_chips(self)
@@ -772,7 +775,7 @@ class Check(Blackjack):
                 self.add_poker_chip_label.pack(side = LEFT)
             elif win == False:
                 # resets the bet amount
-                self.bet_amount = 0
+                Chips.reset_bet(self)
                 
                 # deletes the poker chips
                 Delete.delete_all_poker_chips(self)
@@ -815,6 +818,12 @@ class Choice:
     adds another card and another bet
     '''
     def double(self):
+        # doubles bet amount
+        self.bet_amount *= 2
+        
+        # updates balance and bet labels
+        Chips.update_score(self)
+        
         Choice.hit(self,
                    total_cards,
                    player_cards)

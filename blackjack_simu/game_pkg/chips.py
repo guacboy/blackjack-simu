@@ -9,6 +9,9 @@ from display_pkg.display import displays
 # if user decides to reset the bet amount
 bet_amount_total = []
 
+# used to redo previous bet
+saved_chip_color = []
+
 class Chips:
     def __init__(self,
                  bet_amount = 0,
@@ -72,6 +75,7 @@ class Chips:
             # appends to a list to be later sum up
             # for redo
             bet_amount_total.append(temp_bet_amount)
+            saved_chip_color.append(color) #FIXME
             
             bet_amount += temp_bet_amount
             balance -= temp_bet_amount
@@ -84,10 +88,10 @@ class Chips:
     '''
     def reset_bet(self):
         # redo's the balance and bet amount
-        self.balance += sum(bet_amount_total)
         self.bet_amount -= sum(bet_amount_total)
-        print("reset bet prompted")
+        self.balance += sum(bet_amount_total)
         
+        # avoids duplicates
         bet_amount_total.clear()
         
         try:
@@ -103,7 +107,18 @@ class Chips:
     repeats the previous bet amount
     '''
     def redo_bet(self):
-        pass
+        try:
+            print("Previous bet:", saved_chip_color)
+            # displays previous poker chips and
+            # repeats previous bet amount
+            for i in range(len(saved_chip_color)):
+                Chips.display_poker_chip(self,
+                                         color = saved_chip_color[i])
+            
+            # updates balance and bet labels
+            Chips.update_score(self)
+        except IndexError:
+            print("No previous bet.")
 
     '''
     confirms the bet amount
