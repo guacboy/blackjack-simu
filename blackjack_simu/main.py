@@ -72,7 +72,7 @@ class MainMenu():
             # displays the game title
             if display == "title_label":
                 self.title_label = self.label
-                self.title_label.config(text = "Blackjack v0.0.5",
+                self.title_label.config(text = "Blackjack v0.0.6",
                                           font = TITLE_FONT)
             # displays the trademark title
             elif display == "copyright_label":
@@ -128,7 +128,7 @@ class MainMenu():
         Delete.delete_main_menu(self)
         
         # shuffles cards in the deck
-        Deck.shuffle_cards(total_cards)
+        # Deck.shuffle_cards(total_cards)
         
         # displays game board with initial player's options
         Blackjack.display_init_game(self)
@@ -457,6 +457,13 @@ class Blackjack(MainMenu):
                                          # adds another bet
                                          # and splits the cards evenly
                                          command = lambda: print("Split"))
+                
+        # used to calculate total to check if double button
+        # needs to be displayed
+        self.player_total =  Deck.convert_png_to_values(self,
+                                                        player_cards)
+        self.dealer_total =  Deck.convert_png_to_values(self,
+                                                        dealer_cards)
         
         # checks if current cards meet the requirements
         # to double down;
@@ -464,12 +471,12 @@ class Blackjack(MainMenu):
         # if player has a 16, 17, or 18 with an ace
         if ((self.player_total >= 9 and
             self.player_total <= 11 and
-            player_cards[0].startswith("ace") != False or
-            player_cards[1].startswith("ace") != False) or
+            (player_cards[0].startswith("ace") == False or
+            player_cards[1].startswith("ace") == False)) or
             (self.player_total >= 16 and
             self.player_total <= 18 and
-            player_cards[0].startswith("ace") or
-            player_cards[1].startswith("ace"))):
+            (player_cards[0].startswith("ace") or
+            player_cards[1].startswith("ace")))):
                 self.double_button.pack(side = LEFT,
                                         padx = 10)  
                                
@@ -493,9 +500,9 @@ class Blackjack(MainMenu):
             if first_card[:stop_idx] == second_card[:stop_idx]:
                 self.split_button.pack(side = LEFT,
                                        padx = 10)
-        
-        # displays current cards in play and
-        # adds the sum of cards
+                
+        # updates current cards in play and
+        # the sum of cards
         Blackjack.update_cards(self)
     
     '''
@@ -738,7 +745,8 @@ class Check(Blackjack):
     '''        
     def manual_check(self,
                      player_total,
-                     dealer_total):
+                     dealer_total,
+                     double_bet):
         win = None
         
         try:
@@ -773,6 +781,11 @@ class Check(Blackjack):
                                                   image = self.resize_chip_label,
                                                   bg = BACKGROUND_COLOR)
                 self.add_poker_chip_label.pack(side = LEFT)
+
+                # returns to original bet amount if doubled down
+                if double_bet:
+                    self.bet_amount //= 2
+
             elif win == False:
                 # resets the bet amount
                 Chips.reset_bet(self)
@@ -804,7 +817,8 @@ class Choice:
     '''
     ends turn and passes move to dealer
     '''
-    def stand(self):
+    def stand(self,
+              double_bet):
         Choice.dealer_move(self,
                            self.dealer_total)
         if self.dealer_total <= 21:
@@ -812,12 +826,15 @@ class Choice:
             # after player ends turn
             Check.manual_check(self,
                                self.player_total,
-                               self.dealer_total)
+                               self.dealer_total,
+                               double_bet)
     
     '''
     adds another card and another bet
     '''
     def double(self):
+        double_bet = True
+        
         # doubles bet amount
         self.bet_amount *= 2
         
@@ -827,7 +844,8 @@ class Choice:
         Choice.hit(self,
                    total_cards,
                    player_cards)
-        Choice.stand(self)
+        Choice.stand(self,
+                     double_bet)
     
     '''
     splits card sets into two
