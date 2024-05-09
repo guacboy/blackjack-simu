@@ -125,7 +125,9 @@ class Chips:
     '''
     def confirm_bet(self):
         # deletes bet request display
-        Delete.delete_bet_request(self)
+        Delete.delete_widget(self,
+                             self.bet_request_container,
+                             self.confirm_button)
         
         try:
             if self.bet_amount > 0:
@@ -185,7 +187,9 @@ class Chips:
     '''
     def update_score(self):
         #deletes the balance and bet labels
-        Delete.delete_score(self)
+        Delete.delete_widget(self,
+                             self.balance_label,
+                             self.bet_amount_label)
         
         # displays the balance and bet amount
         Chips.display_score(self)

@@ -3,6 +3,7 @@ from PIL import Image, ImageTk
 
 # dictionary for buttons/labels
 displays = {
+    "curr_display": "",
     "main_menu": {
         "title_label": "title",
         "copyright_label": "copyright",
@@ -15,9 +16,9 @@ displays = {
         "deal_button": "deal" 
     },
     "bet_request": {
-        "confirm_button": "confirm",
         "reset_button": "reset",
-        "redo_button": "redo"
+        "redo_button": "redo",
+        "confirm_button": "confirm"
     },
     "game": {
         "double_button": "double",

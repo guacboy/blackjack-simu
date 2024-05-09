@@ -72,7 +72,7 @@ class MainMenu():
             # displays the game title
             if display == "title_label":
                 self.title_label = self.label
-                self.title_label.config(text = "Blackjack v0.0.6",
+                self.title_label.config(text = "Blackjack v0.0.8",
                                           font = TITLE_FONT)
             # displays the trademark title
             elif display == "copyright_label":
@@ -125,10 +125,12 @@ class MainMenu():
     '''    
     def init_new_game(self):
         # deletes the main menu display
-        Delete.delete_main_menu(self)
+        Delete.delete_widget(self,
+                             self.main_menu_container,
+                             self.copyright_label)
         
         # shuffles cards in the deck
-        # Deck.shuffle_cards(total_cards)
+        Deck.shuffle_cards(total_cards)
         
         # displays game board with initial player's options
         Blackjack.display_init_game(self)
@@ -146,18 +148,19 @@ class Blackjack(MainMenu):
     def reset_round(self):
         try:
             # deletes any current cards in play
-            Delete.delete_cards(self,
-                                displayed_cards)
+            Delete.delete_bundle(self,
+                                 displayed_cards)
             
             # deletes the card totals display
-            Delete.delete_card_totals(self,
-                                      displayed_total_label)
+            Delete.delete_bundle(self,
+                                 displayed_total_label)
             
-            # deletes any addtional poker chips winnings
-            Delete.delete_add_poker_chips(self)
-            
-            # deletes outcome display
-            Delete.delete_check(self)
+            # deletes any addtional poker chips winnings and
+            # outcome display
+            Delete.delete_widget(self,
+                                 self.add_poker_chip_label,
+                                #  self.check_label
+                                 )
         except AttributeError:
             pass
         
@@ -172,15 +175,14 @@ class Blackjack(MainMenu):
     '''    
     def display_init_game(self):
         try:
-            # deletes inital player options
-            Delete.delete_init_game(self)
-            
-            # deletes game display
-            Delete.delete_game(self)
+            # deletes inital player options and game display
+            Delete.delete_widget(self,
+                                 self.init_options_container,
+                                 self.card_options_container)
             
             # deletes the blank card covering the dealer's second card
-            Delete.delete_blank_card(self,
-                                     displayed_blank_cards)
+            Delete.delete_bundle(self,
+                                 displayed_blank_cards)
             
             # updates balance and bet labels
             Chips.update_score(self)
@@ -213,7 +215,7 @@ class Blackjack(MainMenu):
                                  image = image,
                                  resize = PLAYER_OPTIONS_SIZE,
                                  variable = variable)
-            
+
             # displays the bet button
             if display == "bet_button":
                 self.bet_button = self.button
@@ -226,15 +228,18 @@ class Blackjack(MainMenu):
                 self.deal_button.config(image = self.resize_deal_button,
                                        # starts the turn
                                        command = lambda: Blackjack.display_game(self))
-                
+        
         self.bet_button.pack(side = LEFT,
                              padx = 10)
+        # tells the program what is currently being displayed;
+        # used to disable the bet button when betting menu is open
+        displays.update({"curr_display": "bet"})
         
         try:
             # checks if bet amount is a non-zero
             if self.bet_amount > 0:
                 self.deal_button.pack(side = LEFT,
-                                    padx = 10)
+                                      padx = 10)
         except AttributeError:
             pass  
         
@@ -248,8 +253,11 @@ class Blackjack(MainMenu):
         # resets the bet amount
         Chips.reset_bet(self)
         
-        #updates the inital player's options
+        # updates the inital player's options
         Chips.update_init_game(self)
+        
+        # removes the command method from the bet button
+        Blackjack.disable_button(self)
         
         # creates a container for the bet requests
         self.bet_request_container = Frame(self.root,
@@ -386,7 +394,8 @@ class Blackjack(MainMenu):
     '''
     def display_game(self):
         # deletes inital player options
-        Delete.delete_init_game(self)
+        Delete.delete_widget(self,
+                             self.init_options_container)
         
         # resets the game for the next round
         Blackjack.reset_round(self)
@@ -449,14 +458,15 @@ class Blackjack(MainMenu):
                 self.stand_button = self.button
                 self.stand_button.config(image = self.resize_stand_button,
                                          # ends turn
-                                         command = lambda: Choice.stand(self))
+                                         command = lambda: Choice.stand(self,
+                                                                        double_bet = False))
             # displays the split button
             elif display == "split_button":
                 self.split_button = self.button
                 self.split_button.config(image = self.resize_split_button,
                                          # adds another bet
                                          # and splits the cards evenly
-                                         command = lambda: print("Split"))
+                                         command = lambda: Choice.split(self))
                 
         # used to calculate total to check if double button
         # needs to be displayed
@@ -619,6 +629,13 @@ class Blackjack(MainMenu):
     quit the program
     '''    
     def display_pause_menu_option(self):
+        # tells the program what is currently being displayed;
+        # used to disable buttons during pausing
+        displays.update({"curr_display": ""})
+        
+        # removes the command method from the respective button
+        Blackjack.disable_button(self)
+        
         # creates a container for the pause menu options
         self.pause_menu_options = Frame(self.root)
         self.pause_menu_options.pack(anchor = CENTER,
@@ -648,19 +665,75 @@ class Blackjack(MainMenu):
             elif display == "quit_button":
                 self.quit_button = self.button
                 self.quit_button.config(text = "Quit",
-                                             # closes the program
-                                             command = lambda: sys.exit(CLOSE_PROGRAM))
+                                        # closes the program
+                                        command = lambda: sys.exit(CLOSE_PROGRAM))
             # displays the main menu button
             elif display == "resume_button":
                 self.resume_button = self.button
                 self.resume_button.config(text = "Resume",
-                                             # closes pause menu and resumes game
-                                             command = lambda: Delete.delete_pause_menu(self))
+                                          # closes pause menu and resumes game
+                                          command = lambda: Blackjack.resume(self))
         
         self.main_menu_button.pack(fill = "x")
         self.quit_button.pack(fill = "x")
         self.resume_button.pack(pady = 25,
                                 fill = "x")
+        
+    '''
+    removes the command method from the button
+    '''
+    def disable_button(self):
+        if displays.get("curr_display") == "bet":
+            self.bet_button.config(command = lambda: None)
+        else:
+            self.menu_option_button.config(command = lambda: None)
+            self.bet_button.config(command = lambda: None)
+            self.deal_button.config(command = lambda: None)
+            self.reset_button.config(command = lambda: None)
+            self.redo_button.config(command = lambda: None)
+            self.confirm_button.config(command = lambda: None)
+            try: 
+                self.double_button.config(command = lambda: None)
+                self.hit_button.config(command = lambda: None)
+                self.stand_button.config(command = lambda: None)
+                self.split_button.config(command = lambda: None)
+            except AttributeError:
+                pass
+    
+    '''
+    closes the pause menu
+    '''
+    def resume(self):
+        # deletes the pause menu
+        Delete.delete_widget(self,
+                             self.pause_menu_options)
+        
+        # restores the command method to the buttons
+        Blackjack.activate_button(self)
+        
+    '''
+    restores the command method to the button
+    '''  
+    def activate_button(self):
+        if displays.get("curr_display") == "bet":
+            self.bet_button.config(command = lambda: Blackjack.display_bet_request(self))
+        else:
+            self.menu_option_button.config(command = lambda: Blackjack.display_pause_menu_option(self))
+            self.bet_button.config(command = lambda: Blackjack.display_bet_request(self))
+            self.deal_button.config(command = lambda: Blackjack.display_game(self))
+            self.reset_button.config(command = lambda: Chips.reset_bet(self))
+            self.redo_button.config(command = lambda: Chips.redo_bet(self))
+            self.confirm_button.config(command = lambda: Chips.confirm_bet(self))
+            try: 
+                self.double_button.config(command = lambda: Choice.double(self))
+                self.hit_button.config(command = lambda: Choice.hit(self,
+                                                                    total_cards,
+                                                                    player_cards))
+                self.stand_button.config(command = lambda: Choice.stand(self,
+                                                                        double_bet = False))
+                self.split_button.config(command = lambda: Choice.split(self))
+            except AttributeError:
+                pass
         
 class Check(Blackjack):
     '''
@@ -732,7 +805,8 @@ class Check(Blackjack):
                 Chips.reset_bet(self)
                 
                 # deletes the poker chips
-                Delete.delete_all_poker_chips(self)
+                Delete.delete_widget(self,
+                                     self.poker_chip_container)
             elif win == None:
                 pass
                 
@@ -791,7 +865,8 @@ class Check(Blackjack):
                 Chips.reset_bet(self)
                 
                 # deletes the poker chips
-                Delete.delete_all_poker_chips(self)
+                Delete.delete_widget(self,
+                                     self.poker_chip_container)
             elif win == None:
                 pass
                 
@@ -851,7 +926,7 @@ class Choice:
     splits card sets into two
     '''
     def split(self):
-        print("Split")
+        pass
     
     '''
     dealer continues to hit until their total is 17
